@@ -37,6 +37,7 @@ func TestNewXErrsWithLen(t *testing.T) {
 		l int
 		c int
 	}
+
 	tests := []struct {
 		name string
 		args args
@@ -73,6 +74,7 @@ func TestNewXErrsWithLen(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		tt := tt
 
@@ -92,6 +94,7 @@ func TestXErrs_Add(t *testing.T) {
 	type args struct {
 		xerrs []XError
 	}
+
 	tests := []struct {
 		name  string
 		xerrs *XErrs

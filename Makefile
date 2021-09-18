@@ -11,4 +11,3 @@ lint: ## Lint files
 
 test: dep ## Run unit tests
 	go test -cover -race -count=1 ./...
-

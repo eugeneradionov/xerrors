@@ -11,7 +11,7 @@ type XErrors interface {
 	GetErrors() []XError
 	// Len returns length of errors collection
 	Len() int
-	// Sanitize sanities errors collection
+	// Sanitize sanitizes errors collection
 	Sanitize()
 }
 
@@ -32,7 +32,7 @@ func (errs *XErrs) Error() string {
 		return ""
 	}
 
-	var errors = make([]string, len(errs.Errs))
+	errors := make([]string, len(errs.Errs))
 
 	for i := range errs.Errs {
 		errors[i] = errs.Errs[i].Error()

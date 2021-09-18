@@ -1,3 +1,4 @@
+// nolint:dupl
 package xerrors
 
 import (
@@ -21,9 +22,8 @@ func TestXErr_GetDescription(t *testing.T) {
 		{
 			name: "not nil XErr",
 			xErr: &XErr{
-				Err: &Err{
-					Description: "test description",
-				},
+				Message:       "",
+				Description:   "test description",
 				Extra:         nil,
 				InternalExtra: nil,
 			},
@@ -60,10 +60,8 @@ func TestXErr_GetExtra(t *testing.T) {
 		{
 			name: "not nil XErr",
 			xErr: &XErr{
-				Err: &Err{
-					Message:     "test message",
-					Description: "test description",
-				},
+				Message:     "test message",
+				Description: "test description",
 				Extra: map[string]interface{}{
 					"hello": "world",
 				},
@@ -104,10 +102,9 @@ func TestXErr_GetInternalExtra(t *testing.T) {
 		{
 			name: "not nil XErr",
 			xErr: &XErr{
-				Err: &Err{
-					Message:     "test message",
-					Description: "test description",
-				},
+				Message:     "test message",
+				Description: "test description",
+				Extra:       nil,
 				InternalExtra: map[string]interface{}{
 					"hello": "world",
 				},
@@ -146,10 +143,8 @@ func TestXErr_GetMessage(t *testing.T) {
 		{
 			name: "not nil XErr",
 			xErr: &XErr{
-				Err: &Err{
-					Message:     "test message",
-					Description: "test description",
-				},
+				Message:       "test message",
+				Description:   "test description",
 				Extra:         nil,
 				InternalExtra: nil,
 			},
@@ -184,10 +179,8 @@ func TestXErr_Sanitize(t *testing.T) {
 		{
 			name: "not nil XErr",
 			xErr: &XErr{
-				Err: &Err{
-					Message:     "test message",
-					Description: "test description",
-				},
+				Message:       "test message",
+				Description:   "test description",
 				Extra:         nil,
 				InternalExtra: nil,
 			},
