@@ -5,20 +5,22 @@ import "strings"
 type XErrors interface {
 	error
 
-	// Add adds XError to collection
+	// Add adds XError to collection.
 	Add(...XError)
-	// GetErrors returns errors collection
+	// GetErrors returns errors collection.
 	GetErrors() []XError
-	// Len returns length of errors collection
+	// Len returns length of errors collection.
 	Len() int
-	// Sanitize sanitizes errors collection
+	// Sanitize sanitizes errors collection.
 	Sanitize()
 }
 
+// NewXErrs returns new instance of XErrs with cap=1.
 func NewXErrs() *XErrs {
 	return NewXErrsWithLen(0, 1)
 }
 
+// NewXErrsWithLen returns new instance of XErrs with len=l, cap=c.
 func NewXErrsWithLen(l, c int) *XErrs {
 	return &XErrs{Errs: make([]XError, l, c)}
 }
