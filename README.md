@@ -68,3 +68,9 @@ func GetUserByID(id string) (*User, xerrors.XError) {
     return user, nil
 }
 ```
+
+## Caveats
+
+As `XError` requires implementation of standard `error` interface to be compatible with it,
+be careful, when trying to assign function result `XError` to the variable with standard `error` type. 
+This could cause unpredictable behavior.
