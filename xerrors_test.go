@@ -2,6 +2,7 @@
 package xerrors
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 )
@@ -186,13 +187,13 @@ func TestXErrs_Error(t *testing.T) {
 			args: args{
 				xerrs: &XErrs{Errs: []XError{
 					NewXErr("test msg", "test descr", nil, nil),
-					NewXErr("test msg 2", "test descr 2", map[string]interface{}{"filed": "user_id"}, nil),
+					NewXErr("test msg 2", "test descr 2", map[string]interface{}{"field": "user_id"}, nil),
 					NewXErr("test msg 3", "test descr 3",
-						map[string]interface{}{"filed": "user_id"}, map[string]interface{}{"error_info": "some error"}),
+						map[string]interface{}{"field": "user_id"}, map[string]interface{}{"error_info": "some error"}),
 				}},
 			},
 			// nolint:lll
-			want: "test msg: test descr; map[];test msg 2: test descr 2; map[filed:user_id];test msg 3: test descr 3; map[filed:user_id]",
+			want: "test msg: test descr; map[];test msg 2: test descr 2; map[field:user_id];test msg 3: test descr 3; map[field:user_id]",
 		},
 	}
 
@@ -248,16 +249,16 @@ func TestXErrs_GetErrors(t *testing.T) {
 			args: args{
 				xerrs: &XErrs{Errs: []XError{
 					NewXErr("test msg", "test descr", nil, nil),
-					NewXErr("test msg 2", "test descr 2", map[string]interface{}{"filed": "user_id"}, nil),
+					NewXErr("test msg 2", "test descr 2", map[string]interface{}{"field": "user_id"}, nil),
 					NewXErr("test msg 3", "test descr 3",
-						map[string]interface{}{"filed": "user_id"}, map[string]interface{}{"error_info": "some error"}),
+						map[string]interface{}{"field": "user_id"}, map[string]interface{}{"error_info": "some error"}),
 				}},
 			},
 			want: []XError{
 				NewXErr("test msg", "test descr", nil, nil),
-				NewXErr("test msg 2", "test descr 2", map[string]interface{}{"filed": "user_id"}, nil),
+				NewXErr("test msg 2", "test descr 2", map[string]interface{}{"field": "user_id"}, nil),
 				NewXErr("test msg 3", "test descr 3",
-					map[string]interface{}{"filed": "user_id"}, map[string]interface{}{"error_info": "some error"}),
+					map[string]interface{}{"field": "user_id"}, map[string]interface{}{"error_info": "some error"}),
 			},
 		},
 	}
@@ -314,9 +315,9 @@ func TestXErrs_Len(t *testing.T) {
 			args: args{
 				xerrs: &XErrs{Errs: []XError{
 					NewXErr("test msg", "test descr", nil, nil),
-					NewXErr("test msg 2", "test descr 2", map[string]interface{}{"filed": "user_id"}, nil),
+					NewXErr("test msg 2", "test descr 2", map[string]interface{}{"field": "user_id"}, nil),
 					NewXErr("test msg 3", "test descr 3",
-						map[string]interface{}{"filed": "user_id"}, map[string]interface{}{"error_info": "some error"}),
+						map[string]interface{}{"field": "user_id"}, map[string]interface{}{"error_info": "some error"}),
 				}},
 			},
 			want: 3,
@@ -371,9 +372,9 @@ func TestXErrs_Sanitize(t *testing.T) {
 			args: args{
 				xerrs: &XErrs{Errs: []XError{
 					NewXErr("test msg", "test descr", nil, nil),
-					NewXErr("test msg 2", "test descr 2", map[string]interface{}{"filed": "user_id"}, nil),
+					NewXErr("test msg 2", "test descr 2", map[string]interface{}{"field": "user_id"}, nil),
 					NewXErr("test msg 3", "test descr 3",
-						map[string]interface{}{"filed": "user_id"}, map[string]interface{}{"error_info": "some error"}),
+						map[string]interface{}{"field": "user_id"}, map[string]interface{}{"error_info": "some error"}),
 				}},
 			},
 		},
@@ -391,6 +392,72 @@ func TestXErrs_Sanitize(t *testing.T) {
 				if err.GetDescription() != "" {
 					t.Errorf("Sanitize(): xerrs[%d].Description = %s, want = \"\"", i, err.GetDescription())
 				}
+			}
+		})
+	}
+}
+
+func TestXErrs_MarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		xerrs *XErrs
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "nil XErrs",
+			args: args{
+				xerrs: nil,
+			},
+			want: "null",
+		},
+		{
+			name: "no errors",
+			args: args{
+				xerrs: &XErrs{},
+			},
+			want: `{"errors":null}`,
+		},
+		{
+			name: "1 error",
+			args: args{
+				xerrs: &XErrs{Errs: []XError{NewXErr("test msg", "test descr", nil, nil)}},
+			},
+			want: `{"errors":[{"message":"test msg","description":"test descr"}]}`,
+		},
+		{
+			name: "multiple errors",
+			args: args{
+				xerrs: &XErrs{Errs: []XError{
+					NewXErr("test msg", "test descr", nil, nil),
+					NewXErr("test msg 2", "test descr 2", map[string]interface{}{"field": "user_id"}, nil),
+					NewXErr("test msg 3", "test descr 3",
+						map[string]interface{}{"field": "user_id"}, map[string]interface{}{"error_info": "some error"}),
+				}},
+			},
+			// nolint:lll
+			want: `{"errors":[{"message":"test msg","description":"test descr"},{"message":"test msg 2","description":"test descr 2","extra":{"field":"user_id"}},{"message":"test msg 3","description":"test descr 3","extra":{"field":"user_id"}}]}`,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := json.Marshal(tt.args.xerrs)
+			if err != nil {
+				t.Errorf("json.Marshal() error: %v", err)
+			}
+
+			if string(got) != tt.want {
+				t.Errorf("json.Marshal() = %v, want %v", string(got), tt.want)
 			}
 		})
 	}

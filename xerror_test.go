@@ -2,6 +2,7 @@
 package xerrors
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 )
@@ -219,10 +220,10 @@ func TestXErr_Error(t *testing.T) {
 			xErr: &XErr{
 				Message:       "test message",
 				Description:   "test description",
-				Extra:         map[string]interface{}{"filed": "user", "user_id": 123},
+				Extra:         map[string]interface{}{"field": "user", "user_id": 123},
 				InternalExtra: map[string]interface{}{"error_info": "connect to db"},
 			},
-			want: "test message: test description; map[filed:user user_id:123]",
+			want: "test message: test description; map[field:user user_id:123]",
 		},
 	}
 
@@ -267,14 +268,14 @@ func TestNew(t *testing.T) {
 				msg: "some error",
 				opts: []XErrOpt{
 					WithDescription("error description"),
-					WithExtra(map[string]interface{}{"filed": "user", "user_id": 123}),
+					WithExtra(map[string]interface{}{"field": "user", "user_id": 123}),
 					WithInternalExtra(map[string]interface{}{"error_info": "connect to db"}),
 				},
 			},
 			want: &XErr{
 				Message:       "some error",
 				Description:   "error description",
-				Extra:         map[string]interface{}{"filed": "user", "user_id": 123},
+				Extra:         map[string]interface{}{"field": "user", "user_id": 123},
 				InternalExtra: map[string]interface{}{"error_info": "connect to db"},
 			},
 		},
@@ -284,7 +285,7 @@ func TestNew(t *testing.T) {
 				msg: "some error",
 				opts: []XErrOpt{
 					WithDescription("error description"),
-					WithExtra(map[string]interface{}{"filed": "user", "user_id": 123}),
+					WithExtra(map[string]interface{}{"field": "user", "user_id": 123}),
 					WithInternalExtra(map[string]interface{}{"error_info": "connect to db"}),
 					WithMessage("new message"),
 					WithDescription("new description"),
@@ -293,7 +294,7 @@ func TestNew(t *testing.T) {
 			want: &XErr{
 				Message:       "new message",
 				Description:   "new description",
-				Extra:         map[string]interface{}{"filed": "user", "user_id": 123},
+				Extra:         map[string]interface{}{"field": "user", "user_id": 123},
 				InternalExtra: map[string]interface{}{"error_info": "connect to db"},
 			},
 		},
@@ -307,6 +308,74 @@ func TestNew(t *testing.T) {
 
 			if got := New(tt.args.msg, tt.args.opts...); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("New() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestXErr_MarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		msg  string
+		opts []XErrOpt
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "new error without options",
+			args: args{
+				msg: "some error",
+			},
+			want: `{"message":"some error"}`,
+		},
+		{
+			name: "new error with options",
+			args: args{
+				msg: "some error",
+				opts: []XErrOpt{
+					WithDescription("error description"),
+					WithExtra(map[string]interface{}{"field": "user", "user_id": 123}),
+					WithInternalExtra(map[string]interface{}{"error_info": "connect to db"}),
+				},
+			},
+			want: `{"message":"some error","description":"error description","extra":{"field":"user","user_id":123}}`,
+		},
+		{
+			name: "new error with options overwrite",
+			args: args{
+				msg: "some error",
+				opts: []XErrOpt{
+					WithDescription("error description"),
+					WithExtra(map[string]interface{}{"field": "user", "user_id": 123}),
+					WithInternalExtra(map[string]interface{}{"error_info": "connect to db"}),
+					WithMessage("new message"),
+					WithDescription("new description"),
+				},
+			},
+			want: `{"message":"new message","description":"new description","extra":{"field":"user","user_id":123}}`,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			xErr := New(tt.args.msg, tt.args.opts...)
+
+			got, err := json.Marshal(xErr)
+			if err != nil {
+				t.Errorf("json.Marshal() error: %v", err)
+			}
+
+			if string(got) != tt.want {
+				t.Errorf("json.Marshal() = %v, want %v", string(got), tt.want)
 			}
 		})
 	}
