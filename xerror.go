@@ -1,8 +1,6 @@
 package xerrors
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // Error - base interface that contains minimum amount of required functions.
 type Error interface {

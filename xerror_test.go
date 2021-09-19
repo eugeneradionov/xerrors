@@ -1,4 +1,4 @@
-// nolint:dupl
+// nolint:dupl,funlen
 package xerrors
 
 import (
@@ -196,6 +196,117 @@ func TestXErr_Sanitize(t *testing.T) {
 			tt.xErr.Sanitize()
 			if tt.xErr != nil && tt.xErr.Description != "" {
 				t.Errorf("Sanitize() want empty description, got: %v", tt.xErr.Description)
+			}
+		})
+	}
+}
+
+func TestXErr_Error(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		xErr *XErr
+		want string
+	}{
+		{
+			name: "nil XErr",
+			xErr: (*XErr)(nil),
+			want: "nil error",
+		},
+		{
+			name: "not nil XErr",
+			xErr: &XErr{
+				Message:       "test message",
+				Description:   "test description",
+				Extra:         map[string]interface{}{"filed": "user", "user_id": 123},
+				InternalExtra: map[string]interface{}{"error_info": "connect to db"},
+			},
+			want: "test message: test description; map[filed:user user_id:123]",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tt.xErr
+			if got := err.Error(); got != tt.want {
+				t.Errorf("Error() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNew(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		msg  string
+		opts []XErrOpt
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want *XErr
+	}{
+		{
+			name: "new error without options",
+			args: args{
+				msg: "some error",
+			},
+			want: &XErr{
+				Message: "some error",
+			},
+		},
+		{
+			name: "new error with options",
+			args: args{
+				msg: "some error",
+				opts: []XErrOpt{
+					WithDescription("error description"),
+					WithExtra(map[string]interface{}{"filed": "user", "user_id": 123}),
+					WithInternalExtra(map[string]interface{}{"error_info": "connect to db"}),
+				},
+			},
+			want: &XErr{
+				Message:       "some error",
+				Description:   "error description",
+				Extra:         map[string]interface{}{"filed": "user", "user_id": 123},
+				InternalExtra: map[string]interface{}{"error_info": "connect to db"},
+			},
+		},
+		{
+			name: "new error with options overwrite",
+			args: args{
+				msg: "some error",
+				opts: []XErrOpt{
+					WithDescription("error description"),
+					WithExtra(map[string]interface{}{"filed": "user", "user_id": 123}),
+					WithInternalExtra(map[string]interface{}{"error_info": "connect to db"}),
+					WithMessage("new message"),
+					WithDescription("new description"),
+				},
+			},
+			want: &XErr{
+				Message:       "new message",
+				Description:   "new description",
+				Extra:         map[string]interface{}{"filed": "user", "user_id": 123},
+				InternalExtra: map[string]interface{}{"error_info": "connect to db"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := New(tt.args.msg, tt.args.opts...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})
 	}
