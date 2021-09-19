@@ -1,6 +1,7 @@
 # xerrors
 
 Package `xerrors` provides extended error handling primitives to add a bit more information to errors returning from the function.
+
 ```
 go get github.com/eugeneradionov/xerrors
 ```
@@ -12,6 +13,7 @@ With `xerrors` package, you can extend the error with missing information, such 
 and better control the application flow.
 
 ## Usage
+### XError
 Use `XError` interface instead of standard `error`
 
 ```go
@@ -20,8 +22,8 @@ func GetUserByID(id string) (*User, xerrors.XError) {
     if err != nil {
         return nil, xhttp.NewInternalServerError(err)
     }
-    
-return user, nil
+
+    return user, nil
 }
 
 func GetUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -64,8 +66,41 @@ func GetUserByID(id string) (*User, xerrors.XError) {
             xerrors.WithInternalExtra(map[string]interface{}{"error": err}),
         )
     }
-    
+
     return user, nil
+}
+```
+
+### XErrors
+Use `XErrors` for handling multiple errors
+```go
+func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json;charset=utf-8")    
+    
+    xErrs := xerrors.NewXErrs()
+
+    user1, xErr := GetUserByID("user_id_1")
+    if xErr != nil {
+        xErrs.Add(xErr)
+    }
+
+    user2, xErr := GetUserByID("user_id_2")
+    if xErr != nil {
+        xErrs.Add(xErr)
+    }
+
+    SendXErrs(w, http.StatusUnprocessableEntity, xErrs)
+}
+
+func SendXErrs(w http.ResponseWriter, statusCode int, xErrs xerrors.XErrs) {
+    w.Header().Set("Content-Type", "application/json;charset=utf-8")
+    errResp, err := json.Marshal(xErrs)
+    if err != nil {
+        statusCode = http.StatusInternalServerError
+    }
+    
+    w.WriteHeader(statusCode)
+    w.Write(errResp)
 }
 ```
 
