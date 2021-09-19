@@ -7,6 +7,10 @@ import (
 )
 
 func NewError(err error, msg string, code int, opts ...xerrors.XErrOpt) *xerrors.XErr {
+	if err == nil {
+		return nil
+	}
+
 	opts = append([]xerrors.XErrOpt{
 		xerrors.WithExtra(map[string]interface{}{"http_code": code}),
 		xerrors.WithInternalExtra(map[string]interface{}{"error": err}),
