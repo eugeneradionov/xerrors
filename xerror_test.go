@@ -212,7 +212,7 @@ func TestXErr_Error(t *testing.T) {
 		{
 			name: "nil XErr",
 			xErr: (*XErr)(nil),
-			want: "nil error",
+			want: "",
 		},
 		{
 			name: "not nil XErr",

@@ -69,7 +69,7 @@ func NewXErr(msg, descr string, extra, intExtra map[string]interface{}) *XErr {
 // Error unifying XErr with Go error interface.
 func (err *XErr) Error() string {
 	if err == nil {
-		return "nil error"
+		return ""
 	}
 
 	return fmt.Sprintf("%s: %s; %v", err.Message, err.Description, err.Extra)
